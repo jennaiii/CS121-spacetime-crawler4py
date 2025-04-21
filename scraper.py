@@ -26,15 +26,16 @@ def extract_next_links(url, resp):
     try:
         #parse through html
         soup = BeautifulSoup(resp.raw_response.content, "html.parser")
-        for hyperlink in soup.final_all("a", href = True): #loops through all hyperlinks
+        for hyperlink in soup.find_all("a", href = True): #loops through all hyperlinks
             hyperlink_url = hyperlink.get("href") #get the hyperlink's url (is an extension or a completely new domain)
             full_url = urljoin(url,hyperlink_url) #joins the hyperlink's url to the current domain (or returns hyperlink_url if it is a completely new domain)
-            full_url = urlunparse(urlparse(full_url)._replace(fragments="")) #unfragment the url by parsing it to replace the fragments and then unparsing it
+            full_url = urlunparse(urlparse(full_url)._replace(fragment="")) #unfragment the url by parsing it to replace the fragments and then unparsing it
             frontier.add(full_url) #adds to list of links
 
         return list(frontier)
     except Exception as e:
-        print(f'Error extracting from {url}')
+        print(f'Error extracting from {url}\nError: {e}')
+        return list(frontier)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
