@@ -1,6 +1,23 @@
 import re
 from urllib.parse import urlparse, urljoin, urlunparse
 from bs4 import BeautifulSoup
+from collections import Counter
+from collections import defaultdict
+import nltk
+from nltk.corpus import stopwords
+
+nltk.download("stopwords")
+stopwords = set(stopwords.words('english'))
+#unique urls
+unique_urls = set()
+#longest page
+longest_page = ""
+longest_page_words = 0
+#fifty common words
+common_words = Counter()
+#subdomains
+subdomains = defaultdict(int)
+
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -23,6 +40,7 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
 
     frontier = set()
+    global unique_urls, longest_page, longest_page_words, common_words, subdomains
 
     #if the page has an error, skip this page
     if resp.status != 200 or resp.raw_response is None:
@@ -31,6 +49,31 @@ def extract_next_links(url, resp):
     try:
         #parse through html
         soup = BeautifulSoup(resp.raw_response.content, "html.parser")
+
+        parsed = urlparse(url)
+
+        subdomain_parts = parsed.netloc.split('.')
+        subdomain = '.'.join(subdomain_parts[:-2])
+        subdomains[subdomain] += 1
+
+        sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
+
+        if url not in unique_urls:
+            unique_urls.add(url)
+
+        text = soup.get_text()
+        words = re.findall(r"\b[a-zA-Z']+\b", text.lower())
+        filtered_words = [word for word in words if word.lower() not in stopwords]
+
+        word_count = len(words)
+        if word_count > longest_page_words:
+            longest_page_words = word_count
+            longest_page = url
+
+        word_frequencies = Counter(filtered_words)
+        common_words += word_frequencies
+
+
         for hyperlink in soup.find_all("a", href = True): #loops through all hyperlinks
             hyperlink_url = hyperlink.get("href") #get the hyperlink's url (is an extension or a completely new domain)
             full_url = urljoin(url,hyperlink_url) #joins the hyperlink's url to the current domain (or returns hyperlink_url if it is a completely new domain)
@@ -38,6 +81,12 @@ def extract_next_links(url, resp):
             full_url = urlunparse(urlparse(full_url)._replace(path = urlparse(full_url).path.rstrip("/"))) #trailing / removed
             if full_url != url:
                 frontier.add(full_url) #adds to list of links
+
+        with open('report.txt', 'a') as f:
+            f.write(f'Unique URLS: {len(unique_urls)}\n')
+            f.write(f'Longest Page: {longest_page}\t{longest_page_words} words\n')
+            f.write(f'Fifty Common Words: {common_words}\n')
+            f.write(f'Subdomains: {sorted_subdomains}\n\n')
 
         return list(frontier)
     except Exception as e:
