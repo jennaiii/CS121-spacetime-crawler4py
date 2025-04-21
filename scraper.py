@@ -9,8 +9,6 @@ from nltk.corpus import stopwords
 nltk.download("stopwords")
 stopwords = set(stopwords.words('english'))
 
-already_visited = set()
-
 #1.unique urls
 unique_urls = set()
 
@@ -32,11 +30,6 @@ def scraper(url, resp):
         for link in links:
             if is_valid(link):
                 f.write(f'\t{link}\n')
-
-    for link in links:
-        if is_valid(link):
-            already_visited.add(link)
-
     return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
@@ -96,7 +89,7 @@ def extract_next_links(url, resp):
         with open('report.txt', 'a') as f:
             f.write(f'Unique URLS: {len(unique_urls)}\n')
             f.write(f'Longest Page: {longest_page}\t{longest_page_words} words\n')
-            f.write(f'Fifty Common Words: {common_words}\n')
+            f.write(f'Fifty Common Words: {common_words.most_common(50)}\n')
             f.write(f'Subdomains: {sorted_subdomains}\n\n')
 
         return list(frontier)
@@ -111,9 +104,6 @@ def is_valid(url):
 
     try:
         parsed = urlparse(url)
-
-        if url in already_visited:
-            return False
         
         if parsed.scheme not in set(["http", "https"]): #if scheme not http or https
             return False
