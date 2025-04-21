@@ -7,7 +7,7 @@ def scraper(url, resp):
     with open("url_log.txt", "a") as f:
         f.write(f'{url}\n')
         for link in links:
-            f.write(f'{link}\n')
+            f.write(f'\t{link}\n')
     return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
