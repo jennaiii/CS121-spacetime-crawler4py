@@ -1,5 +1,6 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin, urlunparse
+from bs4 import BeautifulSoup
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -15,7 +16,25 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+
+    frontier = set()
+
+    #if the page has an error, skip this page
+    if resp.status != 200 or resp.raw_response is None:
+        return list(frontier)
+    
+    try:
+        #parse through html
+        soup = BeautifulSoup(resp.raw_response.content, "html.parser")
+        for hyperlink in soup.final_all("a", href = True): #loops through all hyperlinks
+            hyperlink_url = hyperlink.get("href") #get the hyperlink's url (is an extension or a completely new domain)
+            full_url = urljoin(url,hyperlink_url) #joins the hyperlink's url to the current domain (or returns hyperlink_url if it is a completely new domain)
+            full_url = urlunparse(urlparse(full_url)._replace(fragments="")) #unfragment the url by parsing it to replace the fragments and then unparsing it
+            frontier.add(full_url) #adds to list of links
+
+        return list(frontier)
+    except Exception as e:
+        print(f'Error extracting from {url}')
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -23,8 +42,22 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
-        if parsed.scheme not in set(["http", "https"]):
+        
+        if parsed.scheme not in set(["http", "https"]): #if scheme not http or https
             return False
+        
+        allowed_domains = [
+            "ics.uci.edu", 
+            "cs.uci.edu", 
+            "informatics.uci.edu",
+            "stat.uci.edu", 
+            "today.uci.edu/department/information_computer_sciences"
+        ]
+
+        domain = parsed.netloc.lower()
+        if not any (domain.endswith(d) for d in allowed_domains): #if domain not in any of the allowed_domains for the assignment
+            return False
+        
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -33,7 +66,7 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()) #checking the path
 
     except TypeError:
         print ("TypeError for ", parsed)
