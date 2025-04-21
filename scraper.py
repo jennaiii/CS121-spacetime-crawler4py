@@ -35,7 +35,9 @@ def extract_next_links(url, resp):
             hyperlink_url = hyperlink.get("href") #get the hyperlink's url (is an extension or a completely new domain)
             full_url = urljoin(url,hyperlink_url) #joins the hyperlink's url to the current domain (or returns hyperlink_url if it is a completely new domain)
             full_url = urlunparse(urlparse(full_url)._replace(fragment="")) #unfragment the url by parsing it to replace the fragments and then unparsing it
-            frontier.add(full_url) #adds to list of links
+            full_url = urlunparse(urlparse(full_url)._replace(path = urlparse(full_url).path.rstrip("/"))) #trailing / removed
+            if full_url != url:
+                frontier.add(full_url) #adds to list of links
 
         return list(frontier)
     except Exception as e:
