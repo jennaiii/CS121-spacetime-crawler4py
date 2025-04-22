@@ -161,7 +161,8 @@ def is_valid(url):
             "/~",
             "/mailman",
             "/faculty",
-            "/event"
+            "/event",
+            "/explore/faculty"
         ]
         
         if any(parsed.path.startswith(p) for p in unallowed_paths):
@@ -173,6 +174,11 @@ def is_valid(url):
         ]
 
         if any(parsed.query == q or parsed.query.startswith(q) for q in unallowed_queries):
+            return False
+
+        if (
+            re.search(r"[\w-]+(?==)", parsed.query.lower())
+            ):
             return False
 
         return not (
