@@ -159,10 +159,18 @@ def is_valid(url):
             "/doku.php/accounts:account_activation"
         ]
         
-        if any(parsed.path == p for p in unallowed_paths):
+        if any(parsed.path == p or parsed.path.endswith(p) for p in unallowed_paths):
+            return False
+        
+        unallowed_queries = [
+            "ical=1"
+        ]
+
+        if any(parsed.query == q or parsed.query.endswith(q) for q in unallowed_queries):
             return False
 
-        return not re.match(
+        return not (
+            re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
@@ -171,6 +179,8 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()) #checking the path
+            or re.search(r"/\d{4}-\d{2}-\d{2}$", parsed.path.lower())
+        )
 
     except TypeError:
         print ("TypeError for ", parsed)
