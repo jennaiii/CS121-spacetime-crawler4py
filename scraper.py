@@ -23,6 +23,7 @@ common_words = Counter()
 subdomains = defaultdict(int)
 
 already_visited = set()
+already_seen = set()
 
 
 def scraper(url, resp):
@@ -110,7 +111,8 @@ def extract_next_links(url, resp):
 
             full_url = urlunparse(parsed_hyperlink)
             if full_url != url: #ensure the url is not the same one as it is currently on so we do not circle back
-                if url not in already_visited:
+                if full_url not in already_seen:
+                    already_seen.add(full_url)
                     new_links.add(full_url) #adds to list of links
 
         #logs everything for the report
