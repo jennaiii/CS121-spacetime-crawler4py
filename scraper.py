@@ -110,7 +110,8 @@ def extract_next_links(url, resp):
 
             full_url = urlunparse(parsed_hyperlink)
             if full_url != url: #ensure the url is not the same one as it is currently on so we do not circle back
-                new_links.add(full_url) #adds to list of links
+                if url not in already_visited:
+                    new_links.add(full_url) #adds to list of links
 
         #logs everything for the report
         with open('report.txt', 'a') as f:
