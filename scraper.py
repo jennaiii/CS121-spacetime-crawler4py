@@ -165,9 +165,9 @@ def is_valid(url):
             "/doku.php/commands",
             "/doku.php/hardware",
             "/doku.php/software",
-            "/doku.php/virtual_environments"
-            "/doku.php/start"
-            "/fellowship_form"
+            "/doku.php/virtual_environments",
+            "/doku.php/start",
+            "/fellowship_form",
             "/~"
         ]
         
