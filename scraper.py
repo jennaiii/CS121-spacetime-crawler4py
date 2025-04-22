@@ -168,17 +168,21 @@ def is_valid(url):
             "/doku.php/virtual_environments",
             "/doku.php/start",
             "/fellowship_form",
-            "/~"
+            "/~",
+            "/mailman",
+            "/faculty",
+            "/event"
         ]
         
         if any(parsed.path.startswith(p) for p in unallowed_paths):
             return False
         
         unallowed_queries = [
-            "ical=1"
+            "ical=1",
+            "filter"
         ]
 
-        if any(parsed.query == q or parsed.query.endswith(q) for q in unallowed_queries):
+        if any(parsed.query == q or parsed.query.startswith(q) for q in unallowed_queries):
             return False
 
         return not (
@@ -194,6 +198,8 @@ def is_valid(url):
             or re.search(r"\d{4}-\d{2}-\d{2}", parsed.path.lower())
             or re.search(r"\d{4}/\d{2}", parsed.path.lower())
             or re.search(r"\d{4}/\d{2}/\d{2}", parsed.path.lower())
+            or re.search(r"/\d{4}", parsed.path.lower())
+            or re.search(r"/page/\d+$", parsed.path.lower())
         )
 
     except TypeError:
