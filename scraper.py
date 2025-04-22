@@ -57,7 +57,7 @@ def extract_next_links(url, resp):
         #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
         parsed = urlparse(url)
         parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
-        parsed = parsed._replace(path = urlparse(parsed).path.rstrip("/")) #trailing / removed
+        parsed = parsed._replace(path = urlparse(url).path.rstrip("/")) #trailing / removed
         if parsed.netloc.lower().startswith("www."): #remove www.
                 parsed_domain = parsed.netloc[4:]
                 parsed = parsed._replace(netloc = parsed_domain)
