@@ -25,7 +25,7 @@ subdomains = defaultdict(int)
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    with open("url_log.txt", "a") as f:
+    with open("url_log.txt", "a") as f: #write down all valid urls scrapped
         f.write(f'{url}\n')
         for link in links:
             if is_valid(link):
@@ -43,41 +43,54 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
 
-    frontier = set()
+    new_links = set()
     global unique_urls, longest_page, longest_page_words, common_words, subdomains
 
-    #if the page has an error, skip this page
+    #if the page has an error or has no response, skip this page
     if resp.status != 200 or resp.raw_response is None:
-        return list(frontier)
+        return list(new_links)
     
     try:
         #parse through html
         soup = BeautifulSoup(resp.raw_response.content, "html.parser")
 
+        #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
         parsed = urlparse(url)
+        parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
+        parsed = parsed._replace(path = urlparse(full_url).path.rstrip("/")) #trailing / removed
+        if parsed.netloc.lower().startswith("www."): #remove www.
+                parsed_domain = parsed.netloc[4:]
+                parsed = parsed._replace(netloc = parsed_domain)
 
+        #adding url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
         subdomain_parts = parsed.netloc.split('.')
         subdomain = '.'.join(subdomain_parts[:-2])
         subdomains[subdomain] += 1
-
         sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
 
+        #adding it to unique urls
         if url not in unique_urls:
             unique_urls.add(url)
 
+        #getting all words on page (words is raw words, filtered_words is without stopwords)
         text = soup.get_text()
         words = re.findall(r"\b[a-zA-Z']+\b", text.lower())
         filtered_words = [word for word in words if word.lower() not in stopwords]
 
+        #counting length of words to keep track of longest page
         word_count = len(words)
         if word_count > longest_page_words:
             longest_page_words = word_count
             longest_page = url
 
+        #counting the frequency of of words
         word_frequencies = Counter(filtered_words)
         common_words += word_frequencies
 
+        #unparsing the url! (it goes back to being a url)
+        url = urlunparse(parsed)
 
+        #magic happens: finds all hyperlinks, joins the hyperlinks, normalizes it, and adds it to list of new_links
         for hyperlink in soup.find_all("a", href = True): #loops through all hyperlinks
             hyperlink_url = hyperlink.get("href") #get the hyperlink's url (is an extension or a completely new domain)
             full_url = urljoin(url,hyperlink_url) #joins the hyperlink's url to the current domain (or returns hyperlink_url if it is a completely new domain)
@@ -88,20 +101,22 @@ def extract_next_links(url, resp):
             if parsed_hyperlink.netloc.lower().startswith("www."): #remove www.
                 domain = parsed_hyperlink.netloc[4:]
                 parsed_hyperlink = parsed_hyperlink._replace(netloc = domain)
-            full_url = urlunparse(parsed_hyperlink)
-            if full_url != url:
-                frontier.add(full_url) #adds to list of links
 
+            full_url = urlunparse(parsed_hyperlink)
+            if full_url != url: #ensure the url is not the same one as it is currently on so we do not circle back
+                new_links.add(full_url) #adds to list of links
+
+        #logs everything for the report
         with open('report.txt', 'a') as f:
             f.write(f'Unique URLS: {len(unique_urls)}\n')
             f.write(f'Longest Page: {longest_page}\t{longest_page_words} words\n')
             f.write(f'Fifty Common Words: {common_words.most_common(50)}\n')
             f.write(f'Subdomains: {sorted_subdomains}\n\n')
 
-        return list(frontier)
+        return list(new_links)
     except Exception as e:
         print(f'Error extracting from {url}\nError: {e}')
-        return list(frontier)
+        return list(new_links)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
