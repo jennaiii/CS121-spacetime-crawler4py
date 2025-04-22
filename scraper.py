@@ -112,7 +112,7 @@ def extract_next_links(url, resp):
 
             full_url = urlunparse(parsed_hyperlink)
             if full_url != url: #ensure the url is not the same one as it is currently on so we do not circle back
-                if full_url not in already_seen:
+                if full_url not in already_seen: #ensure the url is not already seen (if seen, do not add to queue)
                     already_seen.add(full_url)
                     new_links.add(full_url) #adds to list of links
 
@@ -158,12 +158,13 @@ def is_valid(url):
         
         #beginning of paths that are traps
         unallowed_paths = [
-            "/doku.php/",
-            "/~",
-            "/mailman",
-            "/faculty",
-            "/event",
-            "/explore/faculty"
+            "/doku.php/", #trap
+            "/~", #personal user - low value
+            "/mailman", #trap
+            "/faculty", #trap/low value
+            "/event", #trap/low value
+            "/explore/faculty", #trap/low value
+            "/papers/" #papers leading to other papers - low value
         ]
         
         if any(parsed.path.startswith(p) for p in unallowed_paths):
@@ -178,11 +179,13 @@ def is_valid(url):
         if any(parsed.query == q or parsed.query.startswith(q) for q in unallowed_queries):
             return False
 
+        #regex matching for queries
         if (
             re.search(r"[\w-]+(?==)", parsed.query.lower())
             ):
             return False
 
+        #regex matching for paths
         return not (
             re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
