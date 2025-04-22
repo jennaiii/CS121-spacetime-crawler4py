@@ -156,10 +156,18 @@ def is_valid(url):
             return False
         
         unallowed_paths = [
-            "/doku.php/accounts:account_activation"
+            "/doku.php/accounts",
+            "/doku.php/services",
+            "/doku.php/announce",
+            "/doku.php/projects",
+            "/doku.php/network",
+            "/doku.php/commands",
+            "/doku.php/hardware",
+            "/doku.php/software",
+            "/doku.php/virtual_environments"
         ]
         
-        if any(parsed.path == p or parsed.path.endswith(p) for p in unallowed_paths):
+        if any(p in parsed.path for p in unallowed_paths):
             return False
         
         unallowed_queries = [
