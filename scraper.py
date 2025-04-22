@@ -157,17 +157,7 @@ def is_valid(url):
             return False
         
         unallowed_paths = [
-            "/doku.php/accounts",
-            "/doku.php/services",
-            "/doku.php/announce",
-            "/doku.php/projects",
-            "/doku.php/network",
-            "/doku.php/commands",
-            "/doku.php/hardware",
-            "/doku.php/software",
-            "/doku.php/virtual_environments",
-            "/doku.php/start",
-            "/fellowship_form",
+            "/doku.php/",
             "/~",
             "/mailman",
             "/faculty",
