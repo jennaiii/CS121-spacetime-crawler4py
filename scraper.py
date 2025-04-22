@@ -156,6 +156,7 @@ def is_valid(url):
         if not any (domain == d or domain.endswith(f'.{d}') for d in allowed_domains): #if domain not in any of the allowed_domains for the assignment
             return False
         
+        #beginning of paths that are traps
         unallowed_paths = [
             "/doku.php/",
             "/~",
@@ -168,6 +169,7 @@ def is_valid(url):
         if any(parsed.path.startswith(p) for p in unallowed_paths):
             return False
         
+        #beginning of queries that are traps
         unallowed_queries = [
             "ical=1",
             "filter"
@@ -192,10 +194,13 @@ def is_valid(url):
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()) #checking the path
             or re.search(r"\d{4}-\d{2}-\d{2}", parsed.path.lower())
+            or re.search(r"\d{4}-\d{2}}", parsed.path.lower())
+            or re.search(r"\d{4}-\d{4}", parsed.path.lower())
+            or re.search(r"\d{2}-\d{2}-\d{4}", parsed.path.lower())
             or re.search(r"\d{4}/\d{2}", parsed.path.lower())
             or re.search(r"\d{4}/\d{2}/\d{2}", parsed.path.lower())
             or re.search(r"/\d{4}", parsed.path.lower())
-            or re.search(r"/page/\d+$", parsed.path.lower())
+            or re.search(r"/page/\d+", parsed.path.lower())
         )
 
     except TypeError:
