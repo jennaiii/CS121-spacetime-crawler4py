@@ -138,7 +138,7 @@ def is_valid(url):
         ]
 
         domain = parsed.netloc.lower()
-        if not any (domain.endswith(d) for d in allowed_domains): #if domain not in any of the allowed_domains for the assignment
+        if not any (domain == d or domain.endswith(f'.{d}') for d in allowed_domains): #if domain not in any of the allowed_domains for the assignment
             return False
         
         return not re.match(
