@@ -84,6 +84,7 @@ def extract_next_links(url, resp):
         #getting all words on page (words is raw words, filtered_words is without stopwords)
         text = soup.get_text()
         words = re.findall(r"\b[a-zA-Z']+\b", text.lower())
+        words = [word for word in words if len(word) > 1]
         filtered_words = [word for word in words if word.lower() not in stopwords]
 
         #counting length of words to keep track of longest page
