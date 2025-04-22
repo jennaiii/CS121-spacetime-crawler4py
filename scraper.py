@@ -153,6 +153,13 @@ def is_valid(url):
         if not any (domain == d or domain.endswith(f'.{d}') for d in allowed_domains): #if domain not in any of the allowed_domains for the assignment
             return False
         
+        unallowed_paths = [
+            "/doku.php/accounts:account_activation"
+        ]
+        
+        if any(parsed.path == p for p in unallowed_paths):
+            return False
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
