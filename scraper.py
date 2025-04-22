@@ -166,9 +166,12 @@ def is_valid(url):
             "/doku.php/hardware",
             "/doku.php/software",
             "/doku.php/virtual_environments"
+            "/doku.php/start"
+            "/fellowship_form"
+            "/~"
         ]
         
-        if any(p in parsed.path for p in unallowed_paths):
+        if any(parsed.path.startswith(p) for p in unallowed_paths):
             return False
         
         unallowed_queries = [
@@ -188,8 +191,9 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()) #checking the path
-            or re.search(r"\d{4}-\d{2}-\d{2}$", parsed.path.lower())
-            or re.search(r"/\d{4}/\d{2}$", parsed.path.lower())
+            or re.search(r"\d{4}-\d{2}-\d{2}", parsed.path.lower())
+            or re.search(r"\d{4}/\d{2}", parsed.path.lower())
+            or re.search(r"\d{4}/\d{2}/\d{2}", parsed.path.lower())
         )
 
     except TypeError:
