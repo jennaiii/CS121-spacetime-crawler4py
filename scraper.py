@@ -22,14 +22,18 @@ common_words = Counter()
 #4.subdomains
 subdomains = defaultdict(int)
 
+already_visited = set()
+
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
+
     with open("url_log.txt", "a") as f: #write down all valid urls scrapped
         f.write(f'{url}\n')
         for link in links:
             if is_valid(link):
                 f.write(f'\t{link}\n')
+
     return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
@@ -46,21 +50,25 @@ def extract_next_links(url, resp):
     new_links = set()
     global unique_urls, longest_page, longest_page_words, common_words, subdomains
 
+    #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
+    parsed = urlparse(url)
+    parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
+    parsed = parsed._replace(path = urlparse(url).path.rstrip("/")) #trailing / removed
+    if parsed.netloc.lower().startswith("www."): #remove www.
+            parsed_domain = parsed.netloc[4:]
+            parsed = parsed._replace(netloc = parsed_domain)
+
+    #unparsing the url! (it goes back to being a url)
+    url = urlunparse(parsed)
+    
     #if the page has an error or has no response, skip this page
     if resp.status != 200 or resp.raw_response is None:
+        already_visited.add(url)
         return list(new_links)
     
     try:
         #parse through html
         soup = BeautifulSoup(resp.raw_response.content, "html.parser")
-
-        #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
-        parsed = urlparse(url)
-        parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
-        parsed = parsed._replace(path = urlparse(url).path.rstrip("/")) #trailing / removed
-        if parsed.netloc.lower().startswith("www."): #remove www.
-                parsed_domain = parsed.netloc[4:]
-                parsed = parsed._replace(netloc = parsed_domain)
 
         #adding url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
         subdomain_parts = parsed.netloc.split('.')
@@ -87,8 +95,6 @@ def extract_next_links(url, resp):
         word_frequencies = Counter(filtered_words)
         common_words += word_frequencies
 
-        #unparsing the url! (it goes back to being a url)
-        url = urlunparse(parsed)
 
         #magic happens: finds all hyperlinks, joins the hyperlinks, normalizes it, and adds it to list of new_links
         for hyperlink in soup.find_all("a", href = True): #loops through all hyperlinks
@@ -113,9 +119,11 @@ def extract_next_links(url, resp):
             f.write(f'Fifty Common Words: {common_words.most_common(50)}\n')
             f.write(f'Subdomains: {sorted_subdomains}\n\n')
 
+        already_visited.add(url)
         return list(new_links)
     except Exception as e:
         print(f'Error extracting from {url}\nError: {e}')
+        already_visited.add(url)
         return list(new_links)
 
 def is_valid(url):
@@ -125,6 +133,9 @@ def is_valid(url):
 
     try:
         parsed = urlparse(url)
+
+        if url in already_visited:
+            return False
         
         if parsed.scheme not in set(["http", "https"]): #if scheme not http or https
             return False
