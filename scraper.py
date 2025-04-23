@@ -51,6 +51,11 @@ def extract_next_links(url, resp):
         new_links = set()
         global unique_urls, longest_page, longest_page_words, common_words, subdomains
 
+        #if the page has an error or has no response, skip this page
+        if resp.status != 200 or resp.raw_response is None:
+            already_visited.add(url)
+            return list(new_links)
+            
         #parse through html
         soup = BeautifulSoup(resp.raw_response.content, "html.parser")
 
@@ -67,11 +72,7 @@ def extract_next_links(url, resp):
 
         #unparsing the url! (it goes back to being a url)
         url = urlunparse(parsed)
-        
-        #if the page has an error or has no response, skip this page
-        if resp.status != 200 or resp.raw_response is None:
-            already_visited.add(url)
-            return list(new_links)
+
 
         #adding url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
         subdomain_parts = parsed.netloc.split('.')
@@ -151,22 +152,20 @@ def is_valid(url):
             "cs.uci.edu", 
             "informatics.uci.edu",
             "stat.uci.edu", 
-            "today.uci.edu/department/information_computer_sciences"
+            "today.uci.edu"
         ]
 
         domain = parsed.netloc.lower()
         if not any (domain == d or domain.endswith(f'.{d}') for d in allowed_domains): #if domain not in any of the allowed_domains for the assignment
             return False
+
+        if domain == "today.uci.edu" and not parsed.path.startswith("/department/information_computer_sciences"):
+            return False
         
         #beginning of paths that are traps
         unallowed_paths = [
             "/doku.php/", #trap
-            "/~", #personal user - low value
-            "/mailman", #trap
-            "/faculty", #trap/low value
-            "/event", #trap/low value
-            "/explore/faculty", #trap/low value
-            "/papers/", #papers leading to other papers - low value
+            "/papers/", #papers leading to other papers - low value; no hyperlinks on papers
             "/oc_covid_model", #no value - no hyperlinks
             "/covid19", #no value - no hyperlinks
             "/auth" #no value - account login
