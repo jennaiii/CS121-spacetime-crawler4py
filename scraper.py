@@ -47,29 +47,31 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-
-    new_links = set()
-    global unique_urls, longest_page, longest_page_words, common_words, subdomains
-
-    #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
-    parsed = urlparse(url)
-    parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
-    parsed = parsed._replace(path = urlparse(url).path.rstrip("/")) #trailing / removed
-    if parsed.netloc.lower().startswith("www."): #remove www.
-            parsed_domain = parsed.netloc[4:]
-            parsed = parsed._replace(netloc = parsed_domain)
-
-    #unparsing the url! (it goes back to being a url)
-    url = urlunparse(parsed)
-    
-    #if the page has an error or has no response, skip this page
-    if resp.status != 200 or resp.raw_response is None:
-        already_visited.add(url)
-        return list(new_links)
-    
     try:
+        new_links = set()
+        global unique_urls, longest_page, longest_page_words, common_words, subdomains
+
         #parse through html
         soup = BeautifulSoup(resp.raw_response.content, "html.parser")
+
+        #canonical url
+        url = canonical_url(soup,url)
+
+        #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
+        parsed = urlparse(url)
+        parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
+        parsed = parsed._replace(path = urlparse(url).path.rstrip("/")) #trailing / removed
+        if parsed.netloc.lower().startswith("www."): #remove www.
+                parsed_domain = parsed.netloc[4:]
+                parsed = parsed._replace(netloc = parsed_domain)
+
+        #unparsing the url! (it goes back to being a url)
+        url = urlunparse(parsed)
+        
+        #if the page has an error or has no response, skip this page
+        if resp.status != 200 or resp.raw_response is None:
+            already_visited.add(url)
+            return list(new_links)
 
         #adding url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
         subdomain_parts = parsed.netloc.split('.')
@@ -212,3 +214,10 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+def canonical_url(soup,url):
+    # find the canonical url of an url (official url)
+    canonical_tag = soup.find("link", rel="canonical")
+    if canonical_tag and canonical_tag.get("href"):
+        return canonical_tag["href"]
+    return url
