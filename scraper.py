@@ -178,7 +178,8 @@ def is_valid(url):
         unallowed_queries = [
             "ical=1",
             "filter"
-        ]
+        ] + ["share", "utm_source", "utm_medium", "utm_campaign", "ref", "fbclid", "gclid"]
+        # added social sharing keywords as traps; from Claude 3.7 Sonnet -JD
 
         if any(parsed.query == q or parsed.query.startswith(q) for q in unallowed_queries):
             return False
