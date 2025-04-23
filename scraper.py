@@ -164,7 +164,10 @@ def is_valid(url):
             "/faculty", #trap/low value
             "/event", #trap/low value
             "/explore/faculty", #trap/low value
-            "/papers/" #papers leading to other papers - low value
+            "/papers/", #papers leading to other papers - low value
+            "/oc_covid_model", #no value - no hyperlinks
+            "/covid19", #no value - no hyperlinks
+            "/auth" #no value - account login
         ]
         
         if any(parsed.path.startswith(p) for p in unallowed_paths):
