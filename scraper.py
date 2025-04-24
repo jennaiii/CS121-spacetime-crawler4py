@@ -3,11 +3,24 @@ from urllib.parse import urlparse, urljoin, urlunparse
 from bs4 import BeautifulSoup
 from collections import Counter
 from collections import defaultdict
-import nltk
-from nltk.corpus import stopwords
 
-nltk.download("stopwords")
-stopwords = set(stopwords.words('english'))
+stopwords = [
+    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at",
+    "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could",
+    "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for",
+    "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's",
+    "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm",
+    "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't",
+    "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours",
+    "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't",
+    "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there",
+    "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too",
+    "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't",
+    "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's",
+    "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself",
+    "yourselves"
+]
+
 
 #1.unique urls
 unique_urls = set()
@@ -33,7 +46,7 @@ def scraper(url, resp):
         f.write(f'{url}\n')
         for link in links:
             if is_valid(link):
-                f.write(f'\t{link}\n')
+                f.write(f'\t\t{link}\n')
 
     return [link for link in links if is_valid(link)]
 
@@ -59,6 +72,19 @@ def extract_next_links(url, resp):
         #parse through html
         soup = BeautifulSoup(resp.raw_response.content, "html.parser")
 
+        #getting all words on page (words is raw words, filtered_words is without stopwords)
+        text = soup.get_text()
+        words = re.findall(r"\b[a-zA-Z']+\b", text.lower()) #might use tokenizer here ?
+
+        words = [word for word in words if len(word) > 1] #ensure words are at least two characters
+        filtered_words = [word for word in words if word.lower() not in stopwords] #filter out stopwords
+
+        #if too little words - low info/value -> skip
+        if len(filtered_words) < 20:
+            already_visited.add(url)
+            unique_urls.add(url)
+            return list(new_links)
+
         #canonical url
         url = canonical_url(soup,url)
 
@@ -73,32 +99,25 @@ def extract_next_links(url, resp):
         #unparsing the url! (it goes back to being a url)
         url = urlunparse(parsed)
 
-
-        #adding url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
-        subdomain_parts = parsed.netloc.split('.')
-        subdomain = '.'.join(subdomain_parts[:-2])
-        subdomains[subdomain] += 1
-        sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
-
-        #adding it to unique urls
+        #1. adding it to unique urls
         if url not in unique_urls:
             unique_urls.add(url)
 
-        #getting all words on page (words is raw words, filtered_words is without stopwords)
-        text = soup.get_text()
-        words = re.findall(r"\b[a-zA-Z']+\b", text.lower())
-        words = [word for word in words if len(word) > 1]
-        filtered_words = [word for word in words if word.lower() not in stopwords]
-
-        #counting length of words to keep track of longest page
+        #2. counting length of words to keep track of longest page
         word_count = len(words)
         if word_count > longest_page_words:
             longest_page_words = word_count
             longest_page = url
 
-        #counting the frequency of of words
+        #3. counting the frequency of of words
         word_frequencies = Counter(filtered_words)
         common_words += word_frequencies
+
+        #4. adding url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
+        subdomain_parts = parsed.netloc.split('.')
+        subdomain = '.'.join(subdomain_parts[:-2])
+        subdomains[subdomain] += 1
+        sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
 
 
         #magic happens: finds all hyperlinks, joins the hyperlinks, normalizes it, and adds it to list of new_links
@@ -130,7 +149,7 @@ def extract_next_links(url, resp):
         return list(new_links)
     except Exception as e:
         print(f'Error extracting from {url}\nError: {e}')
-        already_visited.add(url)
+        already_visited.add(url) 
         return list(new_links)
 
 def is_valid(url):
@@ -164,15 +183,17 @@ def is_valid(url):
         
         #paths that are traps
         unallowed_paths = [
-            "/admin/", #administrator info
+            "admin", #administrator info
             "/auth/", #no value - account login
             "/videos/", #leads to videos
             "/images/", #leads to images
             "/attachment/", #leads to files
             "/raw-attachment/", #leads to files
             "/papers/", #no value - leads to papers/pdfs
+            "/publications/",
             "/image",
             "/img_",
+            "/video"
         ]
         
         if any(p in parsed.path.lower() for p in unallowed_paths):
@@ -205,16 +226,16 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
-            + r"|java|py|sql|c|h|dtd|apk|odc|img|mpg|grm|frk)$", parsed.path.lower()) #checking the path
-            or re.search(r"\d{4}-\d{2}-\d{2}/", parsed.path.lower())    #avoid calendars - too many dates; do not provide much useful info
-            or re.search(r"\d{2}-\d{2}-\d{2}/", parsed.path.lower())
-            or re.search(r"\d{4}-\d{2}/", parsed.path.lower())
-            or re.search(r"\d{4}-\d{4}/", parsed.path.lower())
-            or re.search(r"\d{2}-\d{2}-\d{4}/", parsed.path.lower())
-            or re.search(r"\d{2}-\d{2}-\d{2}/", parsed.path.lower())
-            or re.search(r"\d{4}/\d{2}/", parsed.path.lower())
-            or re.search(r"\d{4}/\d{2}/\d{2}/", parsed.path.lower())
-            or re.search(r"/\d{4}/", parsed.path.lower())
+            + r"|java|py|sql|c|h|dtd|apk|odc|img|mpg|grm|frk|txt|bam)$", parsed.path.lower()) #checking the path
+            or re.search(r"/\d{4}-\d{2}-\d{2}", parsed.path.lower())    #avoid calendars - too many dates; do not provide much useful info
+            or re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
+            or re.search(r"/\d{4}-\d{2}", parsed.path.lower())
+            or re.search(r"/\d{4}-\d{4}", parsed.path.lower())
+            or re.search(r"/\d{2}-\d{2}-\d{4}", parsed.path.lower())
+            or re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
+            or re.search(r"/\d{4}/\d{2}", parsed.path.lower())
+            or re.search(r"/\d{4}/\d{2}/\d{2}", parsed.path.lower())
+            or re.search(r"/\d{4}", parsed.path.lower())
             or re.search(r"/page/\d+", parsed.path.lower())
             or re.search(r"^/doku\.php/[^:\s]+:[^/\s]*", parsed.path.lower())
         )
@@ -229,3 +250,4 @@ def canonical_url(soup,url):
     if canonical_tag and canonical_tag.get("href"):
         return canonical_tag["href"]
     return url
+
