@@ -193,7 +193,8 @@ def is_valid(url):
             "/image",
             "/img_",
             "/video",
-            "/photo"
+            "/photo",
+            "/files/"
         ]
         
         if any(p in parsed.path.lower() for p in unallowed_paths):
