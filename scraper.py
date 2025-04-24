@@ -170,6 +170,7 @@ def is_valid(url):
             "/images/", #leads to images
             "/attachment/", #leads to files
             "/raw-attachment/", #leads to files
+            "/zip-attachment/",
             "/papers/", #no value - leads to papers/pdfs
             "/image",
             "/img_",
