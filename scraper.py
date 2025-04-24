@@ -162,16 +162,20 @@ def is_valid(url):
         if domain == "today.uci.edu" and not parsed.path.startswith("/department/information_computer_sciences"):
             return False
         
-        #beginning of paths that are traps
+        #paths that are traps
         unallowed_paths = [
-            "/doku.php/", #trap
-            "/papers/", #papers leading to other papers - low value; no hyperlinks on papers
-            "/oc_covid_model", #no value - no hyperlinks
-            "/covid19", #no value - no hyperlinks
-            "/auth" #no value - account login
+            "/admin/", #administrator info
+            "/auth/", #no value - account login
+            "/videos/", #leads to videos
+            "/images/", #leads to images
+            "/attachment/", #leads to files
+            "/raw-attachment/", #leads to files
+            "/papers/", #no value - leads to papers/pdfs
+            "/image",
+            "/img_",
         ]
         
-        if any(parsed.path.startswith(p) for p in unallowed_paths):
+        if any(p in parsed.path.lower() for p in unallowed_paths):
             return False
         
         #beginning of queries that are traps
@@ -181,7 +185,7 @@ def is_valid(url):
         ] + ["share", "utm_source", "utm_medium", "utm_campaign", "ref", "fbclid", "gclid"]
         # added social sharing keywords as traps; from Claude 3.7 Sonnet -JD
 
-        if any(parsed.query == q or parsed.query.startswith(q) for q in unallowed_queries):
+        if any(parsed.query.lower() == q or parsed.query.lower().startswith(q) for q in unallowed_queries):
             return False
 
         #regex matching for queries
@@ -200,15 +204,19 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()) #checking the path
-            or re.search(r"\d{4}-\d{2}-\d{2}", parsed.path.lower())
-            or re.search(r"\d{4}-\d{2}}", parsed.path.lower())
-            or re.search(r"\d{4}-\d{4}", parsed.path.lower())
-            or re.search(r"\d{2}-\d{2}-\d{4}", parsed.path.lower())
-            or re.search(r"\d{4}/\d{2}", parsed.path.lower())
-            or re.search(r"\d{4}/\d{2}/\d{2}", parsed.path.lower())
-            or re.search(r"/\d{4}", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
+            + r"|java|py|sql|c|h|dtd|apk|odc|img|mpg|grm|frk)$", parsed.path.lower()) #checking the path
+            or re.search(r"\d{4}-\d{2}-\d{2}/", parsed.path.lower())    #avoid calendars - too many dates; do not provide much useful info
+            or re.search(r"\d{2}-\d{2}-\d{2}/", parsed.path.lower())
+            or re.search(r"\d{4}-\d{2}/", parsed.path.lower())
+            or re.search(r"\d{4}-\d{4}/", parsed.path.lower())
+            or re.search(r"\d{2}-\d{2}-\d{4}/", parsed.path.lower())
+            or re.search(r"\d{2}-\d{2}-\d{2}/", parsed.path.lower())
+            or re.search(r"\d{4}/\d{2}/", parsed.path.lower())
+            or re.search(r"\d{4}/\d{2}/\d{2}/", parsed.path.lower())
+            or re.search(r"/\d{4}/", parsed.path.lower())
             or re.search(r"/page/\d+", parsed.path.lower())
+            or re.search(^r"/doku\.php/[^:\s]+:[^/\s]*", parsed.path.lower())
         )
 
     except TypeError:
