@@ -190,6 +190,7 @@ def is_valid(url):
         unallowed_paths = [
             "admin", #administrator info
             "/auth/", #no value - account login
+<<<<<<< HEAD
             # "/videos/", #leads to videos
             # "/images/", #leads to images
             # "/attachment/", #leads to files
@@ -199,6 +200,17 @@ def is_valid(url):
             # "/video", #leads to a video
             # "/photo" #leads to a photo
             "/-/" #gitlab logs (commit, tree, raw, blame, merge_requests) - low value
+=======
+            "/videos/", #leads to videos
+            "/images/", #leads to images
+            "/attachment/", #leads to files
+            "/raw-attachment/", #leads to files
+            "/image",
+            "/img_",
+            "/video",
+            "/photo",
+            "/files/"
+>>>>>>> 1d0bd452f519b881c31cc6de6f9ae7bb4327d69c
         ]
         
         if any(p in parsed.path.lower() for p in unallowed_paths):
