@@ -89,6 +89,10 @@ def extract_next_links(url, resp):
         #canonical url
         url = canonical_url(soup,url)
 
+        if url in already_visited:
+            unique_urls.add(url)
+            return list(new_links)
+
         #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
         parsed = urlparse(url)
         parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
@@ -182,24 +186,25 @@ def is_valid(url):
         if domain == "today.uci.edu" and not parsed.path.startswith("/department/information_computer_sciences"):
             return False
         
-        #paths that are traps
+        #paths that are traps/low value
         unallowed_paths = [
             "admin", #administrator info
             "/auth/", #no value - account login
-            "/videos/", #leads to videos
-            "/images/", #leads to images
-            "/attachment/", #leads to files
-            "/raw-attachment/", #leads to files
-            "/image",
-            "/img_",
-            "/video",
-            "/photo"
+            # "/videos/", #leads to videos
+            # "/images/", #leads to images
+            # "/attachment/", #leads to files
+            # "/raw-attachment/", #leads to files
+            # "/image", #leads to image
+            # "/img_", #leads to an image
+            # "/video", #leads to a video
+            # "/photo" #leads to a photo
+            "/-/" #gitlab logs (commit, tree, raw, blame, merge_requests) - low value
         ]
         
         if any(p in parsed.path.lower() for p in unallowed_paths):
             return False
         
-        #beginning of queries that are traps
+        #beginning of queries that are traps/low value
         unallowed_queries = [
             "ical=1",
             "filter"
@@ -237,7 +242,7 @@ def is_valid(url):
             or re.search(r"/\d{4}/\d{2}/\d{2}", parsed.path.lower())
             or re.search(r"/\d{4}", parsed.path.lower())
             or re.search(r"/page/\d+", parsed.path.lower())
-            or re.search(r"^/doku\.php/[^:\s]+:[^/\s]*", parsed.path.lower())
+            #or re.search(r"^/doku\.php/[^:\s]+:[^/\s]*", parsed.path.lower())
         )
 
     except TypeError:
