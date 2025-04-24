@@ -190,15 +190,14 @@ def is_valid(url):
         unallowed_paths = [
             "admin", #administrator info
             "/auth/", #no value - account login
-            # "/videos/", #leads to videos
-            # "/images/", #leads to images
-            # "/attachment/", #leads to files
-            # "/raw-attachment/", #leads to files
-            # "/image",
-            # "/img_",
-            # "/video",
-            # "/photo",
-            "/files/"
+            "/videos/", #leads to videos
+            "/image", #leads to images
+            "/attachment/", #leads to file/image
+            "-attachment/", #leads to files
+            "/img_", #leads to image
+            "/photo", #leads to image
+            "/files/", #leads to files
+            "/-/" #git commands/logs
         ]
         
         if any(p in parsed.path.lower() for p in unallowed_paths):
@@ -231,18 +230,17 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
-            + r"|java|py|sql|c|h|dtd|apk|odc|img|mpg|grm|frk|txt|bam)$", parsed.path.lower()) #checking the path
+            + r"|java|py|sql|c|h|dtd|apk|odc|img|mpg|grm|frk|txt|bam|git)$", parsed.path.lower()) #checking the path
             or re.search(r"/\d{4}-\d{2}-\d{2}", parsed.path.lower())    #avoid calendars - too many dates; do not provide much useful info
             or re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
-            or re.search(r"/\d{4}-\d{2}", parsed.path.lower())
-            or re.search(r"/\d{4}-\d{4}", parsed.path.lower())
+            # or re.search(r"/\d{4}-\d{2}", parsed.path.lower())
+            # or re.search(r"/\d{4}-\d{4}", parsed.path.lower())
             or re.search(r"/\d{2}-\d{2}-\d{4}", parsed.path.lower())
             or re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
-            or re.search(r"/\d{4}/\d{2}", parsed.path.lower())
+            # or re.search(r"/\d{4}/\d{2}", parsed.path.lower())
             or re.search(r"/\d{4}/\d{2}/\d{2}", parsed.path.lower())
-            or re.search(r"/\d{4}", parsed.path.lower())
-            or re.search(r"/page/\d+", parsed.path.lower())
-            #or re.search(r"^/doku\.php/[^:\s]+:[^/\s]*", parsed.path.lower())
+            # or re.search(r"/\d{4}", parsed.path.lower())
+            or re.search(r"/page/\d+", parsed.path.lower()) #pages trap
         )
 
     except TypeError:
