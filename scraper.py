@@ -38,6 +38,8 @@ subdomains = defaultdict(int)
 already_visited = set()
 already_seen = set()
 
+min_words = 20
+max_words = 10000
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -80,9 +82,8 @@ def extract_next_links(url, resp):
         filtered_words = [word for word in words if word.lower() not in stopwords] #filter out stopwords
 
         #if too little words - low info/value -> skip
-        if len(filtered_words) < 20:
+        if len(filtered_words) < min_words or len(filtered_words) > max_words:
             already_visited.add(url)
-            unique_urls.add(url)
             return list(new_links)
 
         #canonical url
@@ -189,11 +190,11 @@ def is_valid(url):
             "/images/", #leads to images
             "/attachment/", #leads to files
             "/raw-attachment/", #leads to files
-            "/papers/", #no value - leads to papers/pdfs
             "/publications/",
             "/image",
             "/img_",
-            "/video"
+            "/video",
+            "/photo"
         ]
         
         if any(p in parsed.path.lower() for p in unallowed_paths):
