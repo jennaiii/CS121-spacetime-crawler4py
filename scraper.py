@@ -216,7 +216,7 @@ def is_valid(url):
             or re.search(r"\d{4}/\d{2}/\d{2}/", parsed.path.lower())
             or re.search(r"/\d{4}/", parsed.path.lower())
             or re.search(r"/page/\d+", parsed.path.lower())
-            or re.search(^r"/doku\.php/[^:\s]+:[^/\s]*", parsed.path.lower())
+            or re.search(r"^/doku\.php/[^:\s]+:[^/\s]*", parsed.path.lower())
         )
 
     except TypeError:
