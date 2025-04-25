@@ -1,3 +1,4 @@
+import regex
 import re
 from urllib.parse import urlparse, urljoin, urlunparse
 from bs4 import BeautifulSoup
@@ -22,23 +23,23 @@ stopwords = [
 ]
 
 
-#1.unique urls
+#1.unique urls (found! even if it was not crawled through/error)
 unique_urls = set()
 
-#2.longest page
+#2.longest page (stop words included)
 longest_page = ""
 longest_page_words = 0
 
-#3.fifty common words
+#3.fifty common words (no stop words)
 common_words = Counter()
 
-#4.subdomains
+#4.subdomains (found! even if it was not crawled through/had error)
 subdomains = defaultdict(int)
 
-already_visited = set()
-already_seen = set()
+already_visited = set() #already crawled
+already_seen = set() #already seen
 
-min_words = 20
+min_words = 80 #based on a website with no content just pictures -- the words count for the headings and dropdown menus
 max_words = 10000
 
 def scraper(url, resp):
@@ -76,7 +77,7 @@ def extract_next_links(url, resp):
 
         #getting all words on page (words is raw words, filtered_words is without stopwords)
         text = soup.get_text()
-        words = re.findall(r"\b[a-zA-Z']+\b", text.lower()) #might use tokenizer here ?
+        words = regex.findall(r"\b\p{L}+(?:['’]\p{L}+)?\b", text.lower())
 
         words = [word for word in words if len(word) > 1] #ensure words are at least two characters
         filtered_words = [word for word in words if word.lower() not in stopwords] #filter out stopwords
@@ -84,13 +85,6 @@ def extract_next_links(url, resp):
         #if too little words - low info/value -> skip
         if len(filtered_words) < min_words or len(filtered_words) > max_words:
             already_visited.add(url)
-            return list(new_links)
-
-        #canonical url
-        url = canonical_url(soup,url)
-
-        if url in already_visited:
-            unique_urls.add(url)
             return list(new_links)
 
         #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
@@ -146,6 +140,7 @@ def extract_next_links(url, resp):
         #logs everything for the report
         with open('report.txt', 'a') as f:
             f.write(f'Unique URLS: {len(unique_urls)}\n')
+            f.write(f'URLS Seen: {len(already_visited)}\n')
             f.write(f'Longest Page: {longest_page}\t{longest_page_words} words\n')
             f.write(f'Fifty Common Words: {common_words.most_common(50)}\n')
             f.write(f'Subdomains: {sorted_subdomains}\n\n')
@@ -215,11 +210,25 @@ def is_valid(url):
 
         #regex matching for queries
         if (
-            re.search(r"[\w-]+(?==)", parsed.query.lower())
+                re.search(r"[\w-]+(?==)", parsed.query.lower())
             ):
             return False
 
-        #regex matching for paths
+        if '/events/' in parsed.path.lower(): #avoid calendars - too many dates; do not provide much useful info
+            if(
+                re.search(r"/\d{4}-\d{2}-\d{2}", parsed.path.lower())
+                re.search(r"/\d{4}-\d{2}", parsed.path.lower())
+                re.search(r"/\d{4}/\d{2}", parsed.path.lower())
+                # re.search(r"/\d{4}-\d{4}", parsed.path.lower())
+                # re.search(r"/\d{2}-\d{2}-\d{4}", parsed.path.lower())
+                # re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
+                # re.search(r"/\d{4}/\d{2}/\d{2}", parsed.path.lower())
+                # re.search(r"/\d{4}", parsed.path.lower())
+                # re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
+            ):
+            return False
+
+        #regex matching for file extensions
         return not (
             re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -230,27 +239,12 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
-            + r"|java|py|sql|c|h|dtd|apk|odc|img|mpg|grm|frk|txt|bam|git)$", parsed.path.lower()) #checking the path
-            or re.search(r"/\d{4}-\d{2}-\d{2}", parsed.path.lower())    #avoid calendars - too many dates; do not provide much useful info
-            or re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
-            # or re.search(r"/\d{4}-\d{2}", parsed.path.lower())
-            # or re.search(r"/\d{4}-\d{4}", parsed.path.lower())
-            or re.search(r"/\d{2}-\d{2}-\d{4}", parsed.path.lower())
-            or re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
-            # or re.search(r"/\d{4}/\d{2}", parsed.path.lower())
-            or re.search(r"/\d{4}/\d{2}/\d{2}", parsed.path.lower())
-            # or re.search(r"/\d{4}", parsed.path.lower())
-            or re.search(r"/page/\d+", parsed.path.lower()) #pages trap
+            + r"|java|py|sql|c|apk|odc|img|mpg|grm|frk|bam|git)$", parsed.path.lower())
         )
 
     except TypeError:
         print ("TypeError for ", parsed)
         raise
 
-def canonical_url(soup,url):
-    # find the canonical url of an url (official url)
-    canonical_tag = soup.find("link", rel="canonical")
-    if canonical_tag and canonical_tag.get("href"):
-        return canonical_tag["href"]
-    return url
+
 
