@@ -69,6 +69,7 @@ def extract_next_links(url, resp):
 
         #if the page has an error or has no response, skip this page
         if resp.status != 200 or resp.raw_response is None:
+            unique_urls.add(url)
             already_visited.add(url)
             return list(new_links)
             
@@ -84,6 +85,7 @@ def extract_next_links(url, resp):
 
         #if too little words - low info/value -> skip
         if len(filtered_words) < min_words or len(filtered_words) > max_words:
+            unique_urls.add(url)
             already_visited.add(url)
             return list(new_links)
 
@@ -97,27 +99,6 @@ def extract_next_links(url, resp):
 
         #unparsing the url! (it goes back to being a url)
         url = urlunparse(parsed)
-
-        #1. adding it to unique urls
-        if url not in unique_urls:
-            unique_urls.add(url)
-
-        #2. counting length of words to keep track of longest page
-        word_count = len(words)
-        if word_count > longest_page_words:
-            longest_page_words = word_count
-            longest_page = url
-
-        #3. counting the frequency of of words
-        word_frequencies = Counter(filtered_words)
-        common_words += word_frequencies
-
-        #4. adding url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
-        subdomain_parts = parsed.netloc.split('.')
-        subdomain = '.'.join(subdomain_parts[:-2])
-        subdomains[subdomain] += 1
-        sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
-
 
         #magic happens: finds all hyperlinks, joins the hyperlinks, normalizes it, and adds it to list of new_links
         for hyperlink in soup.find_all("a", href = True): #loops through all hyperlinks
@@ -137,6 +118,25 @@ def extract_next_links(url, resp):
                     already_seen.add(full_url)
                     new_links.add(full_url) #adds to list of links
 
+        #1. adding it to unique urls
+        unique_urls.add(url)
+
+        #2. counting length of words to keep track of longest page
+        word_count = len(words)
+        if word_count > longest_page_words:
+            longest_page_words = word_count
+            longest_page = url
+
+        #3. counting the frequency of of words
+        word_frequencies = Counter(filtered_words)
+        common_words += word_frequencies
+
+        #4. adding url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
+        subdomain_parts = parsed.netloc.split('.')
+        subdomain = '.'.join(subdomain_parts[:-2])
+        subdomains[subdomain] += 1
+        sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
+
         #logs everything for the report
         with open('report.txt', 'a') as f:
             f.write(f'Unique URLS: {len(unique_urls)}\n')
@@ -149,6 +149,7 @@ def extract_next_links(url, resp):
         return list(new_links)
     except Exception as e:
         print(f'Error extracting from {url}\nError: {e}')
+        unique_urls.add(url)
         already_visited.add(url) 
         return list(new_links)
 
