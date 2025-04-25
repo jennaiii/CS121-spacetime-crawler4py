@@ -23,7 +23,7 @@ stopwords = [
 ]
 
 
-#1.unique urls (found! even if it was not crawled through/error)
+#1.unique urls (crawled through)
 unique_urls = set()
 
 #2.longest page (stop words included)
@@ -33,14 +33,14 @@ longest_page_words = 0
 #3.fifty common words (no stop words)
 common_words = Counter()
 
-#4.subdomains (found! even if it was not crawled through/had error)
+#4.subdomains (crawled through)
 subdomains = defaultdict(int)
 
 already_visited = set() #already crawled
 already_seen = set() #already seen
 
 min_words = 80 #based on a website with no content just pictures -- the words count for the headings and dropdown menus
-max_words = 10000
+max_words = 100000
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -69,7 +69,6 @@ def extract_next_links(url, resp):
 
         #if the page has an error or has no response, skip this page
         if resp.status != 200 or resp.raw_response is None:
-            unique_urls.add(url)
             already_visited.add(url)
             return list(new_links)
             
@@ -79,13 +78,15 @@ def extract_next_links(url, resp):
         #getting all words on page (words is raw words, filtered_words is without stopwords)
         text = soup.get_text()
         words = regex.findall(r"\b\p{L}+(?:['’]\p{L}+)?\b", text.lower())
+        #\b: word boundary
+        #\p{L}+: 1 or more unicode characters
+        #(?:['’]\p{L}+)?: optional apostrophe with more unicode characters
 
         words = [word for word in words if len(word) > 1] #ensure words are at least two characters
         filtered_words = [word for word in words if word.lower() not in stopwords] #filter out stopwords
 
         #if too little words - low info/value -> skip
         if len(filtered_words) < min_words or len(filtered_words) > max_words:
-            unique_urls.add(url)
             already_visited.add(url)
             return list(new_links)
 
@@ -138,6 +139,7 @@ def extract_next_links(url, resp):
         sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
 
         #logs everything for the report
+        already_visited.add(url)
         with open('report.txt', 'a') as f:
             f.write(f'Unique URLS: {len(unique_urls)}\n')
             f.write(f'URLS Seen: {len(already_visited)}\n')
@@ -145,11 +147,9 @@ def extract_next_links(url, resp):
             f.write(f'Fifty Common Words: {common_words.most_common(50)}\n')
             f.write(f'Subdomains: {sorted_subdomains}\n\n')
 
-        already_visited.add(url)
         return list(new_links)
     except Exception as e:
         print(f'Error extracting from {url}\nError: {e}')
-        unique_urls.add(url)
         already_visited.add(url) 
         return list(new_links)
 
@@ -219,13 +219,10 @@ def is_valid(url):
             if any([
                 re.search(r"/\d{4}-\d{2}-\d{2}", parsed.path.lower()),
                 re.search(r"/\d{4}-\d{2}", parsed.path.lower()),
-                re.search(r"/\d{4}/\d{2}", parsed.path.lower())
-                # re.search(r"/\d{4}-\d{4}", parsed.path.lower())
-                # re.search(r"/\d{2}-\d{2}-\d{4}", parsed.path.lower())
-                # re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
-                # re.search(r"/\d{4}/\d{2}/\d{2}", parsed.path.lower())
-                # re.search(r"/\d{4}", parsed.path.lower())
-                # re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
+                re.search(r"/\d{4}/\d{2}", parsed.path.lower()),
+                re.search(r"month", parsed.path.lower()),
+                re.search(r"list", parsed.path.lower()),
+                re.search(r"today", parsed.path.lower())
                 ]):
                 return False
 
@@ -240,7 +237,7 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
-            + r"|java|py|sql|c|apk|odc|img|mpg|grm|frk|bam|git)$", parsed.path.lower())
+            + r"|java|py|sql|c|apk|odc|img|mpg|grm|frk|bam|git|lif)$", parsed.path.lower())
         )
 
     except TypeError:
