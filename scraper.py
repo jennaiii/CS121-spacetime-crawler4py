@@ -210,14 +210,14 @@ def is_valid(url):
 
         #regex matching for queries
         if (
-                re.search(r"[\w-]+(?==)", parsed.query.lower())
+            re.search(r"[\w-]+(?==)", parsed.query.lower())
             ):
             return False
 
         if '/events/' in parsed.path.lower(): #avoid calendars - too many dates; do not provide much useful info
-            if(
-                re.search(r"/\d{4}-\d{2}-\d{2}", parsed.path.lower())
-                re.search(r"/\d{4}-\d{2}", parsed.path.lower())
+            if any([
+                re.search(r"/\d{4}-\d{2}-\d{2}", parsed.path.lower()),
+                re.search(r"/\d{4}-\d{2}", parsed.path.lower()),
                 re.search(r"/\d{4}/\d{2}", parsed.path.lower())
                 # re.search(r"/\d{4}-\d{4}", parsed.path.lower())
                 # re.search(r"/\d{2}-\d{2}-\d{4}", parsed.path.lower())
@@ -225,8 +225,8 @@ def is_valid(url):
                 # re.search(r"/\d{4}/\d{2}/\d{2}", parsed.path.lower())
                 # re.search(r"/\d{4}", parsed.path.lower())
                 # re.search(r"/\d{2}-\d{2}-\d{2}", parsed.path.lower())
-            ):
-            return False
+                ]):
+                return False
 
         #regex matching for file extensions
         return not (
