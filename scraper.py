@@ -237,7 +237,7 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
-            + r"|java|py|sql|c|apk|odc|img|mpg|grm|frk|bam|git|lif)$", parsed.path.lower())
+            + r"|java|py|sql|c|apk|odc|img|mpg|grm|frk|bam|git|lif|ff|war|webp|rkt|rle|bundle|diff|isp|lsp|nb|m|nz|z)$", parsed.path.lower())
         )
 
     except TypeError:
