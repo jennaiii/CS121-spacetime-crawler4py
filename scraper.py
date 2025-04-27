@@ -40,9 +40,12 @@ subdomains = defaultdict(int) # track subdomains in a dictionary
 
 #*---------- SCRAPER INTERFACE ------------
 def scraper(url, resp):
+    # extract valid links from the page
+    # writes to url_log.txt (tracker)
+    # returns list of valid links
     links = extract_next_links(url, resp)
 
-    with open("url_log.txt", "a") as f: #write down all valid urls scrapped
+    with open("url_log.txt", "a") as f:
         f.write(f'{url}\n')
         for link in links:
             if is_valid(link):
@@ -52,7 +55,6 @@ def scraper(url, resp):
 
 #*---------- LINK EXTRACTION LOGIC ------------
 def extract_next_links(url, resp):
-    # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
     # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
@@ -62,6 +64,7 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     try:
+        #* ---------- PARSE PAGE ------------
         new_links = set()
         global unique_urls, longest_page, longest_page_words, longest_page_filtered_words, common_words, subdomains
 
@@ -70,21 +73,18 @@ def extract_next_links(url, resp):
             already_visited.add(url)
             return list(new_links)
             
-        #parse through html
-        soup = BeautifulSoup(resp.raw_response.content, "html.parser")
-
-        #getting all words on page (words is raw words, filtered_words is without stopwords)
-        text = soup.get_text()
-        words = regex.findall(r"\b\p{L}+(?:['’]\p{L}+)?\b", text.lower())
+        #parse through html and extract words
         #\b: word boundary
         #\p{L}+: 1 or more unicode characters
         #(?:['’]\p{L}+)?: optional apostrophe with more unicode characters
+        soup = BeautifulSoup(resp.raw_response.content, "html.parser")
+        text = soup.get_text()
+        words = regex.findall(r"\b\p{L}+(?:['’]\p{L}+)?\b", text.lower()) 
 
+        # filter words
         words = [word for word in words if len(word) > 1] #ensure words are at least two characters
         filtered_words = [word for word in words if word.lower() not in stopwords] #filter out stopwords
-
-        #if too little words - low info/value -> skip
-        if len(filtered_words) < min_words or len(filtered_words) > max_words:
+        if len(filtered_words) < min_words or len(filtered_words) > max_words: # filter out low value info
             already_visited.add(url)
             return list(new_links)
 
@@ -117,10 +117,11 @@ def extract_next_links(url, resp):
                     already_seen.add(full_url)
                     new_links.add(full_url) #adds to list of links
 
-        #1. adding it to unique urls
+        #* ---------- LOG PAGE DETAILS ------------
+        # adding it to unique urls
         unique_urls.add(url)
 
-        #2. counting length of words to keep track of longest page
+        # track longest page
         word_count = len(words)
         filtered_word_count = len(filtered_words)
         if word_count > longest_page_words:
@@ -128,18 +129,17 @@ def extract_next_links(url, resp):
             longest_page_filtered_words = filtered_word_count
             longest_page = url
 
-        #3. counting the frequency of of words
+        # count word frequencies
         word_frequencies = Counter(filtered_words)
         common_words += word_frequencies
 
-        #4. adding url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
+        # add url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
         subdomain_parts = parsed.netloc.split('.')
         subdomain = '.'.join(subdomain_parts[:-2])
         subdomains[subdomain] += 1
         sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
-
-        #logs everything for the report
         already_visited.add(url)
+
         with open('report.txt', 'a') as f:
             f.write(f'Unique URLS: {len(unique_urls)}\n')
             f.write(f'URLS Seen: {len(already_visited)}\n')
