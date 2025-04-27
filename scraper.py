@@ -40,7 +40,7 @@ already_visited = set() #already crawled
 already_seen = set() #already seen
 
 min_words = 80 #based on a website with no content just pictures -- the words count for the headings and dropdown menus
-max_words = 100000
+max_words = 30000
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -184,7 +184,7 @@ def is_valid(url):
         
         #paths that are traps/low value
         unallowed_paths = [
-            "admin", #administrator info
+            "/admin", #administrator info
             "/auth/", #no value - account login
             "/videos/", #leads to videos
             "/image", #leads to images
