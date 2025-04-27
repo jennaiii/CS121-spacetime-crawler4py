@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 from collections import Counter
 from collections import defaultdict
 
+#*---------- GLOBAL VARIABLES ------------
+# irrelevant words not included in search. naive approach to stopword selection.
 stopwords = [
     "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at",
     "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could",
@@ -22,27 +24,21 @@ stopwords = [
     "yourselves"
 ]
 
-
-#1.unique urls (crawled through)
+# track all unique pages to visit and store in a set for future lookup
 unique_urls = set()
-
-#2.longest page (stop words included)
-longest_page = ""
-longest_page_words = 0
-longest_page_filtered_words = 0
-
-#3.fifty common words (no stop words)
-common_words = Counter()
-
-#4.subdomains (crawled through)
-subdomains = defaultdict(int)
-
 already_visited = set() #already crawled
 already_seen = set() #already seen
-
 min_words = 80 #based on a website with no content just pictures -- the words count for the headings and dropdown menus
-max_words = 30000
+max_words = 30000 #arbitrary number to limit the number of words on a page
 
+# record pages for report
+longest_page = "" # includes stop words
+longest_page_words = 0 # includes stop words
+longest_page_filtered_words = 0 # excludes stop words
+common_words = Counter() # track word frequencies
+subdomains = defaultdict(int) # track subdomains in a dictionary
+
+#*---------- SCRAPER INTERFACE ------------
 def scraper(url, resp):
     links = extract_next_links(url, resp)
 
@@ -54,6 +50,7 @@ def scraper(url, resp):
 
     return [link for link in links if is_valid(link)]
 
+#*---------- LINK EXTRACTION LOGIC ------------
 def extract_next_links(url, resp):
     # Implementation required.
     # url: the URL that was used to get the page
@@ -156,6 +153,7 @@ def extract_next_links(url, resp):
         already_visited.add(url) 
         return list(new_links)
 
+#*---------- URL VALIDATION ------------
 def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
