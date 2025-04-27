@@ -29,6 +29,7 @@ unique_urls = set()
 #2.longest page (stop words included)
 longest_page = ""
 longest_page_words = 0
+longest_page_filtered_words = 0
 
 #3.fifty common words (no stop words)
 common_words = Counter()
@@ -65,7 +66,7 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     try:
         new_links = set()
-        global unique_urls, longest_page, longest_page_words, common_words, subdomains
+        global unique_urls, longest_page, longest_page_words, longest_page_filtered_words, common_words, subdomains
 
         #if the page has an error or has no response, skip this page
         if resp.status != 200 or resp.raw_response is None:
@@ -124,8 +125,10 @@ def extract_next_links(url, resp):
 
         #2. counting length of words to keep track of longest page
         word_count = len(words)
+        filtered_word_count = len(filtered_words)
         if word_count > longest_page_words:
             longest_page_words = word_count
+            longest_page_filtered_words = filtered_word_count
             longest_page = url
 
         #3. counting the frequency of of words
@@ -143,7 +146,7 @@ def extract_next_links(url, resp):
         with open('report.txt', 'a') as f:
             f.write(f'Unique URLS: {len(unique_urls)}\n')
             f.write(f'URLS Seen: {len(already_visited)}\n')
-            f.write(f'Longest Page: {longest_page}\t{longest_page_words} words\n')
+            f.write(f'Longest Page: {longest_page}\t{longest_page_words} words\t{longest_page_filtered_words} words without stopwords\n')
             f.write(f'Fifty Common Words: {common_words.most_common(50)}\n')
             f.write(f'Subdomains: {sorted_subdomains}\n\n')
 
