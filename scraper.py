@@ -87,6 +87,11 @@ def extract_next_links(url, resp):
         if len(filtered_words) < min_words or len(filtered_words) > max_words: # filter out low value info
             already_visited.add(url)
             return list(new_links)
+        
+        # check content quality
+        if not is_high_quality(soup, text, filtered_words):
+            already_visited.add(url)
+            return list(new_links)
 
         #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
         parsed = urlparse(url)
@@ -245,12 +250,25 @@ def is_valid(url):
         if re.search(r"page=\d+", parsed.query) or re.search(r"/page/\d+", parsed.path):
             return False
         # Jasmine - large search query traps (ex: ?filter=1&filter=2&filter=3)
-        if len(parsed,query.split('&')) > 3:
+        if len(parsed.query.split('&')) > 3:
             return False
         
     except TypeError:
         print ("TypeError for ", parsed)
         raise
 
+#*---------- CONTENT CHECK ------------
+def is_high_quality(soup, text, filtered_words):
+    # text-to-html ratio
+    html_size = len(str(soup))
+    text_size = len(text)
+    ratio = text_size / html_size if html_size > 0 else 0
+
+    # check content organization
+    has_headings = len(soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])) > 0
+    has_paragraphs = len(soup.find_all("p")) > 2
+    has_lists = len(soup.find_all(["ul", "ol"])) > 2
+
+    return ratio > 0.1 and has_headings and has_paragraphs and has_lists
 
 
