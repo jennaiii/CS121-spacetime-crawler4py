@@ -275,9 +275,9 @@ def is_high_quality(soup, text, filtered_words):
 
     # check content organization
     has_headings = len(soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])) > 0
-    has_paragraphs = len(soup.find_all("p")) > 2
-    has_lists = len(soup.find_all(["ul", "ol"])) > 2
-
-    return ratio > 0.1 and has_headings and has_paragraphs and has_lists
+    has_paragraphs = len(soup.find_all("p")) > 0  # Relaxed from > 2
+    
+    # Relaxed criteria
+    return ratio > 0.05 and has_headings and has_paragraphs
 
 
