@@ -159,19 +159,15 @@ def extract_next_links(url, resp):
 
 #*---------- URL VALIDATION ------------
 def is_valid(url):
-    # Decide whether to crawl this url or not. 
+    # Decide whether to crawl this url or not.
+    # Detect common traps
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
 
     try:
+        # define allowed and unallowed domains (low value or traps)
         parsed = urlparse(url)
-
-        if url in already_visited:
-            return False
-        
-        if parsed.scheme not in set(["http", "https"]): #if scheme not http or https
-            return False
-        
+        domain = parsed.netloc.lower()
         allowed_domains = [
             "ics.uci.edu", 
             "cs.uci.edu", 
@@ -179,15 +175,6 @@ def is_valid(url):
             "stat.uci.edu", 
             "today.uci.edu"
         ]
-
-        domain = parsed.netloc.lower()
-        if not any (domain == d or domain.endswith(f'.{d}') for d in allowed_domains): #if domain not in any of the allowed_domains for the assignment
-            return False
-
-        if domain == "today.uci.edu" and not parsed.path.startswith("/department/information_computer_sciences"):
-            return False
-        
-        #paths that are traps/low value
         unallowed_paths = [
             "/admin", #administrator info
             "/auth/", #no value - account login
@@ -198,29 +185,40 @@ def is_valid(url):
             "/img_", #leads to image
             "/photo", #leads to image
             "/files/", #leads to files
-            "/-/" #git commands/logs
+            "/-/", #git commands/logs
+            "/calendar/", #calendars
         ]
-        
-        if any(p in parsed.path.lower() for p in unallowed_paths):
-            return False
-        
-        #beginning of queries that are traps/low value
         unallowed_queries = [
             "ical=1",
             "filter"
         ] + ["share", "utm_source", "utm_medium", "utm_campaign", "ref", "fbclid", "gclid"]
         # added social sharing keywords as traps; from Claude 3.7 Sonnet -JD
 
+        #* ---------- TRAPS ------------
+        #if already visited
+        if url in already_visited:
+            return False
+        #if scheme not http or https
+        if parsed.scheme not in set(["http", "https"]):
+            return False
+        # if domain or path is not allowed
+        if not any (domain == d or domain.endswith(f'.{d}') for d in allowed_domains):
+            return False
+        if any(p in parsed.path.lower() for p in unallowed_paths):
+            return False
+        # specific edge case
+        if domain == "today.uci.edu" and not parsed.path.startswith("/department/information_computer_sciences"):
+            return False
+        # if query is not allowed
         if any(parsed.query.lower() == q or parsed.query.lower().startswith(q) for q in unallowed_queries):
             return False
-
-        #regex matching for queries
+        # if query uses social sharing keyword
         if (
             re.search(r"[\w-]+(?==)", parsed.query.lower())
             ):
             return False
-
-        if '/events/' in parsed.path.lower(): #avoid calendars - too many dates; do not provide much useful info
+        # if path is a calendar
+        if '/events/' in parsed.path.lower():
             if any([
                 re.search(r"/\d{4}-\d{2}-\d{2}", parsed.path.lower()),
                 re.search(r"/\d{4}-\d{2}", parsed.path.lower()),
@@ -230,8 +228,7 @@ def is_valid(url):
                 re.search(r"today", parsed.path.lower())
                 ]):
                 return False
-
-        #regex matching for file extensions
+        # if file extension is not allowed
         return not (
             re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
