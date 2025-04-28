@@ -241,7 +241,13 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
             + r"|java|py|sql|c|apk|odc|img|mpg|grm|frk|bam|git|lif|ff|war|webp|rkt|rle|bundle|diff|isp|lsp|nb|m|nz|z)$", parsed.path.lower())
         )
-
+        # Jasmine - infinite pagination traps (page links increment infinitely)
+        if re.search(r"page=\d+", parsed.query) or re.search(r"/page/\d+", parsed.path):
+            return False
+        # Jasmine - large search query traps (ex: ?filter=1&filter=2&filter=3)
+        if len(parsed,query.split('&')) > 3:
+            return False
+        
     except TypeError:
         print ("TypeError for ", parsed)
         raise
