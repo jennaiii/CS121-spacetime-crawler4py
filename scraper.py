@@ -134,8 +134,12 @@ def extract_next_links(url, resp):
         common_words += word_frequencies
 
         # add url's subdomain to global subdomains dict and then sorting it alphabetically and by decreasing
-        subdomain_parts = parsed.netloc.split('.')
-        subdomain = '.'.join(subdomain_parts[:-2])
+        # subdomain is valid if it has at least 2 parts (dots)
+        subdomain = ""
+        if len(parsed.netloc.split('.')) > 2:
+            subdomain = '.'.join(parsed.netloc.split('.')[:-2])
+        else:
+            subdomain = parsed.netloc # if not a valid subdomain, use entire domain
         subdomains[subdomain] += 1
         sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
         already_visited.add(url)
