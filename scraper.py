@@ -69,7 +69,7 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     try:
-        #* ---------- PARSE PAGE ------------
+        #* ---------- PARSE PAGE CONTENT ------------
         new_links = set()
         global unique_urls, longest_page, longest_page_words, longest_page_filtered_words, common_words, subdomains
 
@@ -93,39 +93,32 @@ def extract_next_links(url, resp):
             already_visited.add(url)
             return list(new_links)
         
-        # check content quality
-        if not is_high_quality(soup, text, filtered_words):
-            already_visited.add(url)
-            return list(new_links)
-
-        #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
-        parsed = urlparse(url)
-        parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
-        parsed = parsed._replace(path = urlparse(url).path.rstrip("/")) #trailing / removed
-        if parsed.netloc.lower().startswith("www."): #remove www.
-                parsed_domain = parsed.netloc[4:]
-                parsed = parsed._replace(netloc = parsed_domain)
-
-        #unparsing the url! (it goes back to being a url)
-        url = urlunparse(parsed)
-
-        #magic happens: finds all hyperlinks, joins the hyperlinks, normalizes it, and adds it to list of new_links
-        for hyperlink in soup.find_all("a", href = True): #loops through all hyperlinks
-            hyperlink_url = hyperlink.get("href") #get the hyperlink's url (is an extension or a completely new domain)
-            full_url = urljoin(url,hyperlink_url) #joins the hyperlink's url to the current domain (or returns hyperlink_url if it is a completely new domain)
-            
-            parsed_hyperlink = urlparse(full_url)
-            parsed_hyperlink = parsed_hyperlink._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
-            parsed_hyperlink = parsed_hyperlink._replace(path = urlparse(full_url).path.rstrip("/")) #trailing / removed
-            if parsed_hyperlink.netloc.lower().startswith("www."): #remove www.
-                domain = parsed_hyperlink.netloc[4:]
-                parsed_hyperlink = parsed_hyperlink._replace(netloc = domain)
-
-            full_url = urlunparse(parsed_hyperlink)
-            if full_url != url: #ensure the url is not the same one as it is currently on so we do not circle back
-                if full_url not in already_seen: #ensure the url is not already seen (if seen, do not add to queue)
-                    already_seen.add(full_url)
-                    new_links.add(full_url) #adds to list of links
+        #* ---------- QUALITY CHECK, EXTRACT LINKS, NORMALIZE URL ------------
+        # quality check.
+        # only extract links if the page is high quality (based on instructions) - Jasmine
+        quality = is_high_quality(soup, text, filtered_words)
+        if quality:
+            # Extract and normalize links 
+            for hyperlink in soup.find_all("a", href = True):
+                href = hyperlink.get("href")
+                if href and not href.startswith('#'):
+                    full_url = urljoin(url, href)
+                    if is_valid(full_url):
+                        # Normalize the URL (remove fragment, trailing /, and www.)
+                        parsed = urlparse(full_url)
+                        parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
+                        parsed = parsed._replace(path = urlparse(url).path.rstrip("/")) #trailing / removed
+                        if parsed.netloc.lower().startswith("www."): #remove www.
+                            parsed_domain = parsed.netloc[4:]
+                            parsed = parsed._replace(netloc = parsed_domain)
+                        
+                        #unparsing the url! (it goes back to being a url)
+                        full_url = urlunparse(parsed)
+                        
+                        # Check for duplicates
+                        if full_url != url and full_url not in already_seen:
+                            already_seen.add(full_url)
+                            new_links.add(full_url)
 
         #* ---------- LOG PAGE DETAILS ------------
         # adding it to unique urls
@@ -277,7 +270,8 @@ def is_high_quality(soup, text, filtered_words):
     has_headings = len(soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])) > 0
     has_paragraphs = len(soup.find_all("p")) > 0  # Relaxed from > 2
     
-    # Relaxed criteria
-    return ratio > 0.05 and has_headings and has_paragraphs
-
+    # Relaxed criteria - Jasmine
+    # 0.01 ensures at least 1% of the page is text
+    # must have headings and paragraphs
+    return ratio > 0.01 and has_headings and has_paragraphs
 
