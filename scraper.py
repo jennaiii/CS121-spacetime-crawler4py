@@ -107,7 +107,7 @@ def extract_next_links(url, resp):
                         # Normalize the URL (remove fragment, trailing /, and www.)
                         parsed = urlparse(full_url)
                         parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
-                        parsed = parsed._replace(path = urlparse(url).path.rstrip("/")) #trailing / removed
+                        parsed = parsed._replace(path = parsed.path.rstrip("/")) #use full_url instead of original url - Jasmine
                         if parsed.netloc.lower().startswith("www."): #remove www.
                             parsed_domain = parsed.netloc[4:]
                             parsed = parsed._replace(netloc = parsed_domain)
