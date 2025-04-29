@@ -89,9 +89,21 @@ def extract_next_links(url, resp):
         # filter words
         words = [word for word in words if len(word) > 1] #ensure words are at least two characters
         filtered_words = [word for word in words if word.lower() not in stopwords] #filter out stopwords
+
         if len(filtered_words) < min_words or len(filtered_words) > max_words: # filter out low value info
             already_visited.add(url)
             return list(new_links)
+
+        #normalize the url by unfragmenting it, removing trailing /s, and removing www. (easier to compare)
+        parsed = urlparse(url)
+        parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
+        parsed = parsed._replace(path = urlparse(url).path.rstrip("/")) #trailing / removed
+        if parsed.netloc.lower().startswith("www."): #remove www.
+                parsed_domain = parsed.netloc[4:]
+                parsed = parsed._replace(netloc = parsed_domain)
+
+        #unparsing the url! (it goes back to being a url)
+        url = urlunparse(parsed)
         
         #* ---------- QUALITY CHECK, EXTRACT LINKS, NORMALIZE URL ------------
         # quality check.
@@ -107,15 +119,15 @@ def extract_next_links(url, resp):
                 full_url = urljoin(url, href)
                 if is_valid(full_url):
                     # Normalize the URL (remove fragment, trailing /, and www.)
-                    parsed = urlparse(full_url)
-                    parsed = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
-                    parsed = parsed._replace(path = parsed.path.rstrip("/")) #use full_url instead of original url - Jasmine
-                    if parsed.netloc.lower().startswith("www."): #remove www.
-                        parsed_domain = parsed.netloc[4:]
-                        parsed = parsed._replace(netloc = parsed_domain)
+                    parsed_hyperlink = urlparse(full_url)
+                    parsed_hyperlink = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
+                    parsed_hyperlink = parsed._replace(path = urlparse(full_url).path.rstrip("/")) #use full_url instead of original url - Jasmine
+                    if parsed_hyperlink.netloc.lower().startswith("www."): #remove www.
+                        parsed_hyperlink_domain = parsed.netloc[4:]
+                        parsed_hyperlink = parsed._replace(netloc = parsed_hyperlink_domain)
                     
                     #unparsing the url! (it goes back to being a url)
-                    full_url = urlunparse(parsed)
+                    full_url = urlunparse(parsed_hyperlink)
                     
                     # Check for duplicates
                     if full_url != url and full_url not in already_seen:
