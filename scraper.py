@@ -33,7 +33,7 @@ stopwords = set(stopwords.words('english'))
 unique_urls = set()
 already_visited = set() #already crawled
 already_seen = set() #already seen
-min_words = 80 #based on a website with no content just pictures -- the words count for the headings and dropdown menus
+min_words = 20 #based on a website with no content just pictures -- the words count for the headings and dropdown menus
 max_words = 30000 #arbitrary number to limit the number of words on a page
 
 # record pages for report
@@ -266,7 +266,7 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
-            + r"|java|py|sql|c|apk|odc|img|mpg|grm|frk|bam|git|lif|ff|war|webp|rkt|rle|bundle|diff|isp|lsp|nb|m|nz|z)$", parsed.path.lower())
+            + r"|java|py|sql|c|apk|odc|img|mpg|grm|frk|bam|git|lif|ff|war|rkt|rle|bundle|diff|isp|lsp|nb|m|nz|z)$", parsed.path.lower())
         )
 
     except TypeError:
