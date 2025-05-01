@@ -211,10 +211,6 @@ def is_valid(url):
             "action",
             "rev",
             "do",
-            "sessionid",
-            "token",
-            "preview=true",
-            "printable=yes",
             "keywords",
             "search"
         ] + ["share", "utm_source", "utm_medium", "utm_campaign", "ref", "fbclid", "gclid"]
