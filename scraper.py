@@ -5,8 +5,10 @@ from bs4 import BeautifulSoup
 from collections import Counter
 from collections import defaultdict
 import nltk
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords, words
 
+nltk.download('words')
+word_list = set(words.words())
 nltk.download("stopwords")
 stopwords = set(stopwords.words('english'))
 
@@ -15,8 +17,8 @@ stopwords = set(stopwords.words('english'))
 unique_urls = set()
 already_visited = set() #already crawled
 already_seen = set() #already seen
-min_words = 20 #based on a website with no content just pictures -- the words count for the headings and dropdown menus
-max_words = 30000 #arbitrary number to limit the number of words on a page
+min_words = 30 #based on a website with no content just pictures -- the words count for the headings and dropdown menus
+max_words = 15000 #based on trial runs; anything over 15k seems to be datasets or junkyards
 
 # record pages for report
 longest_page = "" # includes stop words
@@ -70,7 +72,7 @@ def extract_next_links(url, resp):
 
         # filter words
         words = [word for word in words if len(word) > 1] #ensure words are at least two characters
-        filtered_words = [word for word in words if word.lower() not in stopwords] #filter out stopwords
+        filtered_words = [word for word in words if word.lower() not in stopwords and in word_list] #filter out stopwords + real word
 
         if len(filtered_words) < min_words or len(filtered_words) > max_words: # filter out low value info
             already_visited.add(url)
@@ -87,11 +89,14 @@ def extract_next_links(url, resp):
         #unparsing the url! (it goes back to being a url)
         url = urlunparse(parsed)
 
+        #* ---------- QUALITY CHECK, EXTRACT LINKS, NORMALIZE URL ------------
+        # quality check.
+        # only extract links if the page is high quality (based on instructions) - Jasmine
         # Extract and normalize links
-        # quality = is_high_quality(soup, text, filtered_words)
-        # if not quality:
-        #     already_visited.add(url)
-        #     return list(new_links)
+        quality = is_high_quality(soup, text, filtered_words)
+        if not quality:
+            already_visited.add(url)
+            return list(new_links)
         for hyperlink in soup.find_all("a", href = True):
             href = hyperlink.get("href")
             full_url = urljoin(url, href)
@@ -116,11 +121,9 @@ def extract_next_links(url, resp):
         unique_urls.add(url)
 
         # track longest page
-        word_count = len(words)
         filtered_word_count = len(filtered_words)
-        if word_count > longest_page_words:
-            longest_page_words = word_count
-            longest_page_filtered_words = filtered_word_count
+        if filtered_word_count > longest_page_words:
+            longest_page_words = filtered_word_count
             longest_page = url
 
         # count word frequencies
@@ -134,6 +137,7 @@ def extract_next_links(url, resp):
             subdomain = '.'.join(parsed.netloc.split('.')[:-2])
         else:
             subdomain = parsed.netloc # if not a valid subdomain, use entire domain
+
         subdomains[subdomain] += 1
         sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
 
@@ -142,9 +146,10 @@ def extract_next_links(url, resp):
         with open('report.txt', 'w') as f:
             f.write(f'Unique URLS: {len(unique_urls)}\n')
             f.write(f'URLS Seen: {len(already_visited)}\n')
-            f.write(f'Longest Page: {longest_page}\t{longest_page_words} words\t{longest_page_filtered_words} words without stopwords\n')
+            f.write(f'Longest Page: {longest_page}\t{longest_page_words} words')
             f.write(f'Fifty Common Words: {common_words.most_common(50)}\n')
-            f.write(f'Subdomains: {sorted_subdomains}\n\n')
+            f.write(f'Subdomains: {sorted_subdomains}\n')
+            f.write(f'Total Subdomains: {len(sorted_subdomains)}')
 
         return list(new_links)
     except Exception as e:
@@ -212,8 +217,6 @@ def is_valid(url):
             return False
         # if query is not allowed
         if any(parsed.query.lower() == q or parsed.query.lower().startswith(q) for q in unallowed_queries):
-            return False
-        if "rev" and "do" in parsed.query.lower():
             return False
         # if path is a calendar
         if '/events/' in parsed.path.lower():
