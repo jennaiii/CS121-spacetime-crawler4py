@@ -72,7 +72,8 @@ def extract_next_links(url, resp):
 
         # filter words
         words = [word for word in words if len(word) > 1] #ensure words are at least two characters
-        filtered_words = [word for word in words if word.lower() not in stopwords and in word_list] #filter out stopwords + real word
+        filtered_words = [word for word in words if word.lower() not in stopwords] #filter out stopwords + real word
+        filtered_words = [word for word in filtered_words if word.lower() in word_list] #only include real words
 
         if len(filtered_words) < min_words or len(filtered_words) > max_words: # filter out low value info
             already_visited.add(url)
