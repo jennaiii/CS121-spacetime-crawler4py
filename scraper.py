@@ -147,7 +147,7 @@ def extract_next_links(url, resp):
         with open('report.txt', 'w') as f:
             f.write(f'Unique URLS: {len(unique_urls)}\n')
             f.write(f'URLS Seen: {len(already_visited)}\n')
-            f.write(f'Longest Page: {longest_page}\t{longest_page_words} words')
+            f.write(f'Longest Page: {longest_page}\t{longest_page_words} words\n')
             f.write(f'Fifty Common Words: {common_words.most_common(50)}\n')
             f.write(f'Subdomains: {sorted_subdomains}\n')
             f.write(f'Total Subdomains: {len(sorted_subdomains)}')
