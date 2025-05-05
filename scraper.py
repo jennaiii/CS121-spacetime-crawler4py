@@ -11,24 +11,6 @@ nltk.download("stopwords")
 stopwords = set(stopwords.words('english'))
 
 #*---------- GLOBAL VARIABLES ------------
-# irrelevant words not included in search. naive approach to stopword selection.
-# stopwords = [
-#     "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at",
-#     "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could",
-#     "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for",
-#     "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's",
-#     "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm",
-#     "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't",
-#     "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours",
-#     "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't",
-#     "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there",
-#     "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too",
-#     "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't",
-#     "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's",
-#     "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself",
-#     "yourselves"
-# ]
-
 # track all unique pages to visit and store in a set for future lookup
 unique_urls = set()
 already_visited = set() #already crawled
@@ -104,35 +86,30 @@ def extract_next_links(url, resp):
 
         #unparsing the url! (it goes back to being a url)
         url = urlunparse(parsed)
-        
-        #* ---------- QUALITY CHECK, EXTRACT LINKS, NORMALIZE URL ------------
-        # quality check.
-        # only extract links if the page is high quality (based on instructions) - Jasmine
-        quality = is_high_quality(soup, text, filtered_words)
-        if not quality:
-            already_visited.add(url)
-            return list(new_links)
-        # Extract and normalize links 
+
+        # Extract and normalize links
+        # quality = is_high_quality(soup, text, filtered_words)
+        # if not quality:
+        #     already_visited.add(url)
+        #     return list(new_links)
         for hyperlink in soup.find_all("a", href = True):
             href = hyperlink.get("href")
-            if href and not href.startswith('#'):
-                full_url = urljoin(url, href)
-                if is_valid(full_url):
-                    # Normalize the URL (remove fragment, trailing /, and www.)
-                    parsed_hyperlink = urlparse(full_url)
-                    parsed_hyperlink = parsed._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
-                    parsed_hyperlink = parsed._replace(path = urlparse(full_url).path.rstrip("/")) #use full_url instead of original url - Jasmine
-                    if parsed_hyperlink.netloc.lower().startswith("www."): #remove www.
-                        parsed_hyperlink_domain = parsed.netloc[4:]
-                        parsed_hyperlink = parsed._replace(netloc = parsed_hyperlink_domain)
-                    
-                    #unparsing the url! (it goes back to being a url)
-                    full_url = urlunparse(parsed_hyperlink)
-                    
-                    # Check for duplicates
-                    if full_url != url and full_url not in already_seen:
-                        already_seen.add(full_url)
-                        new_links.add(full_url)
+            full_url = urljoin(url, href)
+            # Normalize the URL (remove fragment, trailing /, and www.)
+            parsed_hyperlink = urlparse(full_url)
+            parsed_hyperlink = parsed_hyperlink._replace(fragment="") #unfragment the url by parsing it to replace the fragments and then unparsing it
+            parsed_hyperlink = parsed_hyperlink._replace(path = urlparse(full_url).path.rstrip("/")) #use full_url instead of original url - Jasmine
+            if parsed_hyperlink.netloc.lower().startswith("www."): #remove www.
+                parsed_hyperlink_domain = parsed_hyperlink.netloc[4:]
+                parsed_hyperlink = parsed_hyperlink._replace(netloc = parsed_hyperlink_domain)
+            
+            #unparsing the url! (it goes back to being a url)
+            full_url = urlunparse(parsed_hyperlink)
+            
+            # Check for duplicates
+            if full_url != url and full_url not in already_seen:
+                already_seen.add(full_url)
+                new_links.add(full_url)
 
         #* ---------- LOG PAGE DETAILS ------------
         # adding it to unique urls
@@ -159,9 +136,10 @@ def extract_next_links(url, resp):
             subdomain = parsed.netloc # if not a valid subdomain, use entire domain
         subdomains[subdomain] += 1
         sorted_subdomains = dict(sorted(subdomains.items(), key=lambda item:(-item[1],item[0])))
+
         already_visited.add(url)
 
-        with open('report.txt', 'a') as f:
+        with open('report.txt', 'w') as f:
             f.write(f'Unique URLS: {len(unique_urls)}\n')
             f.write(f'URLS Seen: {len(already_visited)}\n')
             f.write(f'Longest Page: {longest_page}\t{longest_page_words} words\t{longest_page_filtered_words} words without stopwords\n')
