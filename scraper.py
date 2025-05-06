@@ -33,13 +33,6 @@ def scraper(url, resp):
     # writes to url_log.txt (tracker)
     # returns list of valid links
     links = extract_next_links(url, resp)
-
-    with open("url_log.txt", "a") as f:
-        f.write(f'{url}\n')
-        for link in links:
-            if is_valid(link):
-                f.write(f'\t\t{link}\n')
-
     return [link for link in links if is_valid(link)]
 
 #*---------- LINK EXTRACTION LOGIC ------------
