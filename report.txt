@@ -1,63 +1,64 @@
 1. Unique URLS found: 10839
-note: these are valid URLs that we crawled through. invalid URLs are excluded (status erros, too small/large, low quality)
+Note: These are valid URLs that we crawled through. Invalid URLs are excluded (status errors, too small/large based on word count, low quality).
 
 2. Longest Page: https://cml.ics.uci.edu/category/aiml	with 8,245 words
-note: our maximum word limit was 15,000 words and we excluded stopwords and words that were not real/an actual english word
+Note: Our maximum word limit was 15,000 words and we excluded stopwords and words that were not real/an actual english word from the word count.
 
 3. Fifty Most Common Words (excluding stopwords and words that were not real/an actual english word): 
-    1.('research', 74941),
-    2.('student', 47719), 
-    3.('computer', 40883),
-    4.('science', 40610), 
-    5.('learning', 37483), 
-    6.('graduate', 37465), 
-    7.('undergraduate', 36751), 
-    8.('news', 29819), 
-    9.('us', 28653), 
-    10.('data', 26434), 
-    11.('information', 23992), 
-    12.('community', 23704), 
-    13.('faculty', 21030), 
-    14.('alumni', 20845), 
-    15.('machine', 19010), 
-    16.('view', 18820), 
-    17.('people', 17684), 
-    18.('school', 17518), 
-    19.('march', 16511), 
-    20.('future', 15810), 
-    21.('statistics', 15718), 
-    22.('engineering', 15595), 
-    23.('may', 15134), 
-    24.('corporate', 13509), 
-    25.('new', 13328), 
-    26.('academic', 12786), 
-    27.('update', 12609), 
-    28.('june', 12558), 
-    29.('tech', 12243), 
-    30.('design', 12148), 
-    31.('search', 12105), 
-    32.('department', 11841), 
-    33.('lab', 11756), 
-    34.('health', 11748), 
-    35.('one', 11732), 
-    36.('impact', 11456), 
-    37.('automatic', 11343), 
-    38.('content', 11250), 
-    39.('follow', 11200), 
-    40.('involved', 11058), 
-    41.('connected', 11041), 
-    42.('august', 10676), 
-    43.('skip', 10222), 
-    44.('contact', 10174), 
-    45.('read', 10160), 
-    46.('experience', 10085), 
-    47.('professional', 10081), 
-    48.('program', 9937), 
-    49.('past', 9882), 
-    50.('get', 9828)
+Note: Ordered by decreasing frequency <word, count>
+    1. research, 74941
+    2. student, 47719
+    3. computer, 40883
+    4. science, 40610
+    5. learning, 37483
+    6. graduate, 37465
+    7. undergraduate, 36751
+    8. news, 29819
+    9. us, 28653
+    10. data, 26434
+    11. information, 23992
+    12. community, 23704
+    13. faculty, 21030
+    14. alumni, 20845
+    15. machine, 19010
+    16. view, 18820
+    17. people, 17684
+    18. school, 17518
+    19. march, 16511
+    20. future, 15810
+    21. statistics, 15718
+    22. engineering, 15595
+    23. may, 15134
+    24. corporate, 13509
+    25. new, 13328
+    26. academic, 12786
+    27. update, 12609
+    28. june, 12558
+    29. tech, 12243
+    30. design, 12148
+    31. search, 12105
+    32. department, 11841
+    33. lab, 11756
+    34. health, 11748
+    35. one, 11732
+    36. impact, 11456
+    37. automatic, 11343
+    38. content, 11250
+    39. follow, 11200
+    40. involved, 11058
+    41. connected, 11041
+    42. august, 10676
+    43. skip, 10222
+    44. contact, 10174
+    45. read, 10160
+    46. experience, 10085
+    47. professional, 10081
+    48. program, 9937
+    49. past, 9882
+    50. get, 9828
 
-4. Subdomains found in the uci.edu domain sorted alphabetically
-Total Subdomains: 90
+4. Subdomains found in the uci.edu domain | Total Subdomains: 90
+Note: Ordered alphabetically <subdomain, count>
     accessibility.ics, 6
     acoi.ics, 112
     archive.ics, 32
