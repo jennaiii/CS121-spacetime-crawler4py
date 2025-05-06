@@ -1,13 +1,17 @@
 Spring 2025 CS121 Assignment 2: Web Crawler
-Group 18
+Group 18: Jenny Truong, John Daniel Norombaba, Jasmine Wu
 
 1. Unique URLS found: 10839
 Note: These are valid URLs that we crawled through. Invalid URLs are excluded (status errors, too small/large based on word count, low quality).
+    Min word count: 30 words
+    Max word count: 15,000 words
+    *excludes stopwords and words that ware not an actual english word (nltk word list)
+    High quality: must have paragraphs, headings, and 1% of page is text
 
 2. Longest Page: https://cml.ics.uci.edu/category/aiml	with 8,245 words
-Note: Our maximum word limit was 15,000 words and we excluded stopwords and words that were not real/an actual english word from the word count.
+Note: Our maximum word limit was 15,000 words and we excluded stopwords and words that are not an actual english word (ntlk word list) from the word count.
 
-3. Fifty Most Common Words (excluding stopwords and words that were not real/an actual english word): 
+3. Fifty Most Common Words (excluding stopwords and words that were not an actual english word (nltk word list)): 
 Note: Ordered by decreasing frequency <word, count>
     1. research, 74941
     2. student, 47719
