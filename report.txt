@@ -1,3 +1,6 @@
+Spring 2025 CS121 Assignment 2: Web Crawler
+Group 18
+
 1. Unique URLS found: 10839
 Note: These are valid URLs that we crawled through. Invalid URLs are excluded (status errors, too small/large based on word count, low quality).
 
